@@ -4,7 +4,7 @@
 </P>
 
 <div><p>📄 Project Report: <a href="https://docs.google.com/document/d/1dcPeDBUQCzurDISDz38uuYc5foM_4DQevtwt9kbmjFw/edit?usp=sharing" alt="Report"> View Report </a></p> 
-<p>📊 Live Dashboard: <a href="https://code-riser.github.io/FashionTrend-AI/"> Launch Dashboard </a></p>
+<p>📊 Live Dashboard: <a href="[https://code-riser.github.io/FashionTrend-AI/](https://ai-for-market-trend-b5hptwmhcvkxrmbxwtzaed.streamlit.app/)"> Launch Dashboard </a></p>
 <p>🎥 Video Demo & Presentation: <a href="" >Watch Demo </a></p>
 </div>
 <hr>
