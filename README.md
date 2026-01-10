@@ -5,7 +5,7 @@
 
 <div><p>📄 Project Report: <a href="https://docs.google.com/document/d/1dcPeDBUQCzurDISDz38uuYc5foM_4DQevtwt9kbmjFw/edit?usp=sharing" alt="Report"> View Report </a></p> 
 <p>📊 Live Dashboard: <a href="https://ai-for-market-trend-b5hptwmhcvkxrmbxwtzaed.streamlit.app/"> Launch Dashboard </a></p>
-<p>🎥 Video Demo & Presentation: <a href="" >Watch Demo </a></p>
+<p>🎥 Video Demo & Presentation: <a href="https://drive.google.com/file/d/1kL10Dto8SaCSyY7RKwwNlS2L1p4e68nE/view?usp=drivesdk" >Watch Demo </a></p>
 </div>
 <hr>
 <h2>📋 Table of Contents</h2>
