@@ -6,7 +6,10 @@ scikit-learn
 streamlit
 plotly
 
+streamlit==1.19.0
+
 altair==4.2.2
+
 
 
 
