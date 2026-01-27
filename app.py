@@ -14,7 +14,7 @@ from sklearn.metrics import r2_score, mean_absolute_error
 
 try:
     df = pd.read_csv(
-        "ai-for-market-trend/data/Superstore_sales.csv",
+        "data/Superstore_sales.csv",
         encoding="latin1",
         dayfirst=True
     )
@@ -289,6 +289,7 @@ st.divider()
 st.markdown(
     "**AI Applications – Module E | Market Trend Analysis Project**"
 )
+
 
 
 
