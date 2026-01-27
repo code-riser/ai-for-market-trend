@@ -11,16 +11,11 @@ from sklearn.metrics import r2_score, mean_absolute_error
 
 
 
-
-try:
-    df = pd.read_csv(
+df = pd.read_csv(
         "data/Superstore_sales.csv",
         encoding="latin1",
         dayfirst=True
     )
-except pd.errors.EmptyDataError:
-    st.error("CSV file is empty. Please upload a valid dataset.")
-    st.stop()
 
 
 
@@ -289,6 +284,7 @@ st.divider()
 st.markdown(
     "**AI Applications – Module E | Market Trend Analysis Project**"
 )
+
 
 
 
