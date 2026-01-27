@@ -10,13 +10,8 @@ from sklearn.metrics import r2_score, mean_absolute_error
 
 
 
-
-df = pd.read_csv(
-        "data/Superstore_sales.csv",
-        encoding="latin1",
-        dayfirst=True
-    )
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "data", "Superstore_sales.csv")
 
 
 # PAGE CONFIG
@@ -53,16 +48,17 @@ h1,h2,h3,h4 {color:#f8fafc;}
 
 @st.cache_data
 def load_data():
+    if not os.path.exists(DATA_PATH):
+        st.error(f"CSV file not found at: {DATA_PATH}")
+        st.stop()
+
     df = pd.read_csv(
-        "data/Superstore_sales.csv",
+        DATA_PATH,
         encoding="latin1",
         parse_dates=["Order Date"],
         dayfirst=True
     )
-    df = df.dropna(subset=["Sales"])
     return df
-
-df = load_data()
 
 
 # SIDEBAR FILTERS
@@ -284,6 +280,7 @@ st.divider()
 st.markdown(
     "**AI Applications – Module E | Market Trend Analysis Project**"
 )
+
 
 
 
