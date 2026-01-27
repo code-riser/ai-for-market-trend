@@ -59,7 +59,7 @@ h1,h2,h3,h4 {color:#f8fafc;}
 @st.cache_data
 def load_data():
     df = pd.read_csv(
-        "data/superstore_sales.csv",
+        "data/Superstore_sales.csv",
         encoding="latin1",
         parse_dates=["Order Date"],
         dayfirst=True
@@ -289,6 +289,7 @@ st.divider()
 st.markdown(
     "**AI Applications – Module E | Market Trend Analysis Project**"
 )
+
 
 
 
