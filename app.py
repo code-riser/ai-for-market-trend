@@ -6,8 +6,7 @@ import plotly.express as px
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "data", "Superstore_sales.csv")
+
 
 
 # PAGE CONFIG
@@ -18,6 +17,39 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "data", "Superstore_sales.csv")
+
+
+
+# =========================
+# DATA LOADER (SINGLE SOURCE)
+# =========================
+@st.cache_data
+def load_data():
+    if not os.path.exists(DATA_PATH):
+        st.error(f"CSV file not found at: {DATA_PATH}")
+        st.stop()
+
+    try:
+        df = pd.read_csv(
+            DATA_PATH,
+            encoding="latin1",
+            parse_dates=["Order Date"],
+            dayfirst=True
+        )
+    except pd.errors.EmptyDataError:
+        st.error("CSV file is empty.")
+        st.stop()
+
+    df = df.dropna(subset=["Sales"])
+    return df
+
+
+# LOAD DATA (CRITICAL POSITION)
+df = load_data()
 
 
 # PREMIUM UI CSS
@@ -275,3 +307,4 @@ st.divider()
 st.markdown(
     "**AI Applications – Module E | Market Trend Analysis Project**"
 )
+
