@@ -1,7 +1,8 @@
-
-
-import streamlit as st
+# =========================
+# IMPORTS
+# =========================
 import os
+import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -9,13 +10,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error
 
 
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "data", "Superstore_sales.csv")
-
-
-# PAGE CONFIG
-
+# =========================
+# PAGE CONFIG (ALWAYS FIRST)
+# =========================
 st.set_page_config(
     page_title="AI Market Trend Analysis",
     page_icon="📊",
@@ -24,8 +21,44 @@ st.set_page_config(
 )
 
 
-# PREMIUM UI CSS
+# =========================
+# FILE PATH (STREAMLIT CLOUD SAFE)
+# =========================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "data", "Superstore_sales.csv")
 
+
+# =========================
+# DATA LOADER (SINGLE SOURCE)
+# =========================
+@st.cache_data
+def load_data():
+    if not os.path.exists(DATA_PATH):
+        st.error(f"CSV file not found at: {DATA_PATH}")
+        st.stop()
+
+    try:
+        df = pd.read_csv(
+            DATA_PATH,
+            encoding="latin1",
+            parse_dates=["Order Date"],
+            dayfirst=True
+        )
+    except pd.errors.EmptyDataError:
+        st.error("CSV file is empty.")
+        st.stop()
+
+    df = df.dropna(subset=["Sales"])
+    return df
+
+
+# LOAD DATA (CRITICAL POSITION)
+df = load_data()
+
+
+# =========================
+# PREMIUM UI CSS
+# =========================
 st.markdown("""
 <style>
 body {background-color:#020617;}
@@ -44,43 +77,27 @@ h1,h2,h3,h4 {color:#f8fafc;}
 """, unsafe_allow_html=True)
 
 
-# DATA LOADER (SAFE)
-
-@st.cache_data
-def load_data():
-    if not os.path.exists(DATA_PATH):
-        st.error(f"CSV file not found at: {DATA_PATH}")
-        st.stop()
-
-    df = pd.read_csv(
-        DATA_PATH,
-        encoding="latin1",
-        parse_dates=["Order Date"],
-        dayfirst=True
-    )
-    return df
-
-
+# =========================
 # SIDEBAR FILTERS
-
+# =========================
 st.sidebar.title("⚙️ Filters")
 
 region = st.sidebar.multiselect(
     "Region",
-    options=df["Region"].unique(),
-    default=df["Region"].unique()
+    options=sorted(df["Region"].unique()),
+    default=sorted(df["Region"].unique())
 )
 
 segment = st.sidebar.multiselect(
     "Customer Segment",
-    options=df["Segment"].unique(),
-    default=df["Segment"].unique()
+    options=sorted(df["Segment"].unique()),
+    default=sorted(df["Segment"].unique())
 )
 
 category = st.sidebar.multiselect(
     "Category",
-    options=df["Category"].unique(),
-    default=df["Category"].unique()
+    options=sorted(df["Category"].unique()),
+    default=sorted(df["Category"].unique())
 )
 
 filtered_df = df[
@@ -90,16 +107,18 @@ filtered_df = df[
 ]
 
 
+# =========================
 # HEADER
-
+# =========================
 st.title("📊 AI-Driven Market Trend Analysis")
 st.markdown(
     "Dynamic analytics & forecasting system using Machine Learning on retail sales data."
 )
 
 
-# KPI METRICS (CIRCLE CONCEPT)
-
+# =========================
+# KPI METRICS
+# =========================
 total_sales = filtered_df["Sales"].sum()
 total_orders = len(filtered_df)
 avg_sales = filtered_df["Sales"].mean()
@@ -133,8 +152,9 @@ with c3:
 st.divider()
 
 
-# SALES BY SEGMENT (DONUT)
-
+# =========================
+# SALES BY SEGMENT
+# =========================
 seg_sales = filtered_df.groupby("Segment")["Sales"].sum().reset_index()
 
 fig_seg = px.pie(
@@ -147,8 +167,9 @@ fig_seg = px.pie(
 )
 
 
+# =========================
 # SALES BY REGION
-
+# =========================
 reg_sales = filtered_df.groupby("Region")["Sales"].sum().reset_index()
 
 fig_region = px.bar(
@@ -160,17 +181,18 @@ fig_region = px.bar(
 )
 
 colA, colB = st.columns(2)
-colA.plotly_chart(fig_seg, width="stretch")
-colB.plotly_chart(fig_region, width="stretch")
+colA.plotly_chart(fig_seg, use_container_width=True)
+colB.plotly_chart(fig_region, use_container_width=True)
 
 st.divider()
 
 
+# =========================
 # MONTHLY SALES TREND
-
+# =========================
 monthly = (
     filtered_df
-    .groupby(pd.Grouper(key="Order Date", freq="ME"))["Sales"]
+    .groupby(pd.Grouper(key="Order Date", freq="M"))["Sales"]
     .sum()
     .reset_index()
 )
@@ -184,11 +206,12 @@ fig_month = px.line(
     template="plotly_dark"
 )
 
-st.plotly_chart(fig_month, width="stretch")
+st.plotly_chart(fig_month, use_container_width=True)
 
 
+# =========================
 # TOP 10 PRODUCTS
-
+# =========================
 top_products = (
     filtered_df
     .groupby("Product Name")["Sales"]
@@ -207,13 +230,14 @@ fig_top = px.bar(
     template="plotly_dark"
 )
 
-st.plotly_chart(fig_top, width="stretch")
+st.plotly_chart(fig_top, use_container_width=True)
 
 st.divider()
 
 
+# =========================
 # LINEAR REGRESSION FORECAST
-
+# =========================
 monthly["Index"] = np.arange(len(monthly))
 
 X = monthly[["Index"]]
@@ -235,29 +259,28 @@ future_index = pd.DataFrame({
 future_dates = pd.date_range(
     start=monthly["Order Date"].max(),
     periods=future_steps + 1,
-    freq="ME"
+    freq="M"
 )[1:]
-
-future_sales = model.predict(future_index)
 
 forecast_df = pd.DataFrame({
     "Order Date": future_dates,
-    "Sales": future_sales
+    "Sales": model.predict(future_index)
 })
 
 fig_forecast = px.line(
-    pd.concat([monthly[["Order Date","Sales"]], forecast_df]),
+    pd.concat([monthly[["Order Date", "Sales"]], forecast_df]),
     x="Order Date",
     y="Sales",
     title="Sales Forecast (Linear Regression)",
     template="plotly_dark"
 )
 
-st.plotly_chart(fig_forecast, width="stretch")
+st.plotly_chart(fig_forecast, use_container_width=True)
 
 
+# =========================
 # MODEL PERFORMANCE
-
+# =========================
 m1, m2 = st.columns(2)
 m1.metric("R² Score", f"{r2:.3f}")
 m2.metric("Mean Absolute Error", f"₹ {mae:,.2f}")
@@ -265,28 +288,18 @@ m2.metric("Mean Absolute Error", f"₹ {mae:,.2f}")
 st.divider()
 
 
-# RAW & FILTERED DATA
-
+# =========================
+# DATA PREVIEW
+# =========================
 st.subheader("📂 Filtered Dataset")
-st.dataframe(filtered_df, width="stretch")
+st.dataframe(filtered_df, use_container_width=True)
 
-st.subheader("📂 Raw Dataset")
-st.dataframe(df.head(100), width="stretch")
+st.subheader("📂 Raw Dataset (Sample)")
+st.dataframe(df.head(100), use_container_width=True)
 
 
+# =========================
 # FOOTER
-
+# =========================
 st.divider()
-st.markdown(
-    "**AI Applications – Module E | Market Trend Analysis Project**"
-)
-
-
-
-
-
-
-
-
-
-
+st.markdown("**AI Applications – Module E | Market Trend Analysis Project**")
