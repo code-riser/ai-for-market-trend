@@ -5,75 +5,55 @@ import plotly.express as px
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error
 
-# -------------------------------------------------
-# PAGE CONFIG
-# -------------------------------------------------
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
     page_title="AI Market Trend Analysis",
     page_icon="📊",
     layout="wide"
 )
 
-# -------------------------------------------------
-# PREMIUM UI
-# -------------------------------------------------
+# ---------------- UI STYLE ----------------
 st.markdown("""
 <style>
 body {background-color:#020617;}
-h1,h2,h3,h4 {color:#f8fafc;}
+h1,h2,h3 {color:#f8fafc;}
+.section {margin-top:40px;}
 .card {
     background:#0f172a;
-    padding:22px;
-    border-radius:18px;
+    padding:18px;
+    border-radius:16px;
     text-align:center;
-    box-shadow:0 10px 30px rgba(0,0,0,0.4);
 }
-.card h2 {color:#38bdf8;}
-.card p {color:#e5e7eb;}
+.card h2 {color:#38bdf8;font-size:28px;}
+.card p {color:#e5e7eb;font-size:14px;}
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------
-# DATA LOADER
-# -------------------------------------------------
+# ---------------- DATA LOAD ----------------
 @st.cache_data
 def load_data():
-    try:
-        df = pd.read_csv(
-            "data/Superstore_sales.csv",
-            encoding="latin1",
-            parse_dates=["Order Date"],
-            dayfirst=True
-        )
-        df = df.dropna(subset=["Sales"])
-        return df
-    except Exception as e:
-        st.error(f"❌ Data loading failed: {e}")
-        st.stop()
+    df = pd.read_csv(
+        "data/Superstore_sales.csv",
+        encoding="latin1",
+        parse_dates=["Order Date"],
+        dayfirst=True
+    )
+    df = df.dropna(subset=["Sales"])
+    return df
 
 df = load_data()
 
-# -------------------------------------------------
-# SIDEBAR FILTERS
-# -------------------------------------------------
+# ---------------- SIDEBAR ----------------
 st.sidebar.title("⚙️ Filters")
 
 region = st.sidebar.multiselect(
-    "Region",
-    sorted(df["Region"].unique()),
-    df["Region"].unique()
+    "Region", df["Region"].unique(), df["Region"].unique()
 )
-
 segment = st.sidebar.multiselect(
-    "Customer Segment",
-    sorted(df["Segment"].unique()),
-    df["Segment"].unique()
+    "Segment", df["Segment"].unique(), df["Segment"].unique()
 )
-
 category = st.sidebar.multiselect(
-    "Category",
-    sorted(df["Category"].unique()),
-    df["Category"].unique()
+    "Category", df["Category"].unique(), df["Category"].unique()
 )
 
 filtered_df = df[
@@ -82,41 +62,37 @@ filtered_df = df[
     (df["Category"].isin(category))
 ]
 
-# -------------------------------------------------
-# HEADER
-# -------------------------------------------------
+# ---------------- HEADER ----------------
 st.title("📊 AI-Driven Market Trend Analysis")
 st.markdown(
-    "End-to-end **data analytics & forecasting dashboard** using Machine Learning."
+    "Interactive **sales analytics & forecasting dashboard** built using real retail data."
 )
 
-# -------------------------------------------------
-# KPI METRICS
-# -------------------------------------------------
-c1, c2, c3, c4 = st.columns(4)
+# ---------------- KPI CARDS ----------------
+k1, k2, k3, k4 = st.columns(4)
 
-c1.markdown(f"""
+k1.markdown(f"""
 <div class="card">
 <h2>₹ {filtered_df['Sales'].sum():,.0f}</h2>
 <p>Total Sales</p>
 </div>
 """, unsafe_allow_html=True)
 
-c2.markdown(f"""
+k2.markdown(f"""
 <div class="card">
 <h2>{filtered_df.shape[0]}</h2>
 <p>Total Orders</p>
 </div>
 """, unsafe_allow_html=True)
 
-c3.markdown(f"""
+k3.markdown(f"""
 <div class="card">
-<h2>₹ {filtered_df['Sales'].mean():,.2f}</h2>
-<p>Average Order Value</p>
+<h2>₹ {filtered_df['Sales'].mean():,.0f}</h2>
+<p>Avg Order Value</p>
 </div>
 """, unsafe_allow_html=True)
 
-c4.markdown(f"""
+k4.markdown(f"""
 <div class="card">
 <h2>{filtered_df['Customer ID'].nunique()}</h2>
 <p>Unique Customers</p>
@@ -125,10 +101,8 @@ c4.markdown(f"""
 
 st.markdown("---")
 
-# -------------------------------------------------
-# SALES DISTRIBUTION
-# -------------------------------------------------
-col1, col2 = st.columns(2)
+# ---------------- SALES DISTRIBUTION ----------------
+c1, c2 = st.columns(2)
 
 seg_sales = filtered_df.groupby("Segment")["Sales"].sum().reset_index()
 fig_seg = px.pie(
@@ -136,9 +110,9 @@ fig_seg = px.pie(
     values="Sales",
     names="Segment",
     hole=0.45,
-    title="Sales by Customer Segment"
+    title="Sales by Segment"
 )
-col1.plotly_chart(fig_seg, use_container_width=True)
+c1.plotly_chart(fig_seg, use_container_width=True)
 
 reg_sales = filtered_df.groupby("Region")["Sales"].sum().reset_index()
 fig_reg = px.bar(
@@ -147,13 +121,11 @@ fig_reg = px.bar(
     y="Sales",
     title="Sales by Region"
 )
-col2.plotly_chart(fig_reg, use_container_width=True)
+c2.plotly_chart(fig_reg, use_container_width=True)
 
 st.markdown("---")
 
-# -------------------------------------------------
-# TIME SERIES ANALYSIS
-# -------------------------------------------------
+# ---------------- MONTHLY TREND ----------------
 monthly = (
     filtered_df
     .groupby(pd.Grouper(key="Order Date", freq="M"))["Sales"]
@@ -170,9 +142,9 @@ fig_month = px.line(
 )
 st.plotly_chart(fig_month, use_container_width=True)
 
-# -------------------------------------------------
-# TOP PRODUCTS
-# -------------------------------------------------
+st.markdown("---")
+
+# ---------------- TOP PRODUCTS ----------------
 top_products = (
     filtered_df
     .groupby("Product Name")["Sales"]
@@ -187,15 +159,13 @@ fig_top = px.bar(
     x="Sales",
     y="Product Name",
     orientation="h",
-    title="Top 10 Products by Sales"
+    title="Top 10 Products"
 )
 st.plotly_chart(fig_top, use_container_width=True)
 
 st.markdown("---")
 
-# -------------------------------------------------
-# MACHINE LEARNING FORECAST
-# -------------------------------------------------
+# ---------------- ML FORECAST ----------------
 monthly["Index"] = np.arange(len(monthly))
 X = monthly[["Index"]]
 y = monthly["Sales"]
@@ -230,24 +200,17 @@ forecast_plot = px.line(
 )
 st.plotly_chart(forecast_plot, use_container_width=True)
 
-# -------------------------------------------------
-# MODEL PERFORMANCE
-# -------------------------------------------------
-r2 = r2_score(y, monthly["Prediction"])
-mae = mean_absolute_error(y, monthly["Prediction"])
-
+# ---------------- MODEL METRICS ----------------
 m1, m2 = st.columns(2)
-m1.metric("R² Score", round(r2, 3))
-m2.metric("Mean Absolute Error", f"₹ {mae:,.2f}")
+m1.metric("R² Score", round(r2_score(y, monthly["Prediction"]), 3))
+m2.metric("MAE", f"₹ {mean_absolute_error(y, monthly['Prediction']):,.0f}")
 
 st.markdown("---")
 
-# -------------------------------------------------
-# DATA VIEW
-# -------------------------------------------------
-with st.expander("📂 View Filtered Dataset"):
-    st.dataframe(filtered_df)
+# ---------------- DATA VIEW ----------------
+with st.expander("📂 View Filtered Data"):
+    st.dataframe(filtered_df, use_container_width=True)
 
 st.markdown(
-    "**AI Applications – Market Trend Analysis Project | Streamlit + ML**"
+    "**AI Market Trend Analysis | Streamlit + Machine Learning**"
 )
