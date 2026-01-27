@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,108 +5,75 @@ import plotly.express as px
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error
 
-
-
-
+# -------------------------------------------------
 # PAGE CONFIG
-
+# -------------------------------------------------
 st.set_page_config(
     page_title="AI Market Trend Analysis",
     page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
+# -------------------------------------------------
+# PREMIUM UI
+# -------------------------------------------------
+st.markdown("""
+<style>
+body {background-color:#020617;}
+h1,h2,h3,h4 {color:#f8fafc;}
+.card {
+    background:#0f172a;
+    padding:22px;
+    border-radius:18px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.card h2 {color:#38bdf8;}
+.card p {color:#e5e7eb;}
+</style>
+""", unsafe_allow_html=True)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "data", "Superstore_sales.csv")
-
-
-
-# =========================
-# DATA LOADER (SINGLE SOURCE)
-# =========================
+# -------------------------------------------------
+# DATA LOADER
+# -------------------------------------------------
 @st.cache_data
 def load_data():
-    if not os.path.exists(DATA_PATH):
-        st.error(f"CSV file not found at: {DATA_PATH}")
-        st.stop()
-
     try:
         df = pd.read_csv(
-            DATA_PATH,
+            "data/Superstore_sales.csv",
             encoding="latin1",
             parse_dates=["Order Date"],
             dayfirst=True
         )
-    except pd.errors.EmptyDataError:
-        st.error("CSV file is empty.")
+        df = df.dropna(subset=["Sales"])
+        return df
+    except Exception as e:
+        st.error(f"❌ Data loading failed: {e}")
         st.stop()
 
-    df = df.dropna(subset=["Sales"])
-    return df
-
-
-# LOAD DATA (CRITICAL POSITION)
 df = load_data()
 
-
-# PREMIUM UI CSS
-
-st.markdown("""
-<style>
-body {background-color:#020617;}
-.main {background-color:#020617;}
-h1,h2,h3,h4 {color:#f8fafc;}
-.metric {
-    background: linear-gradient(135deg,#1e293b,#020617);
-    padding:20px;
-    border-radius:18px;
-    text-align:center;
-    box-shadow:0 15px 40px rgba(0,0,0,0.5);
-}
-.metric h2 {color:#38bdf8;font-size:32px;}
-.metric p {color:#e5e7eb;font-size:16px;}
-</style>
-""", unsafe_allow_html=True)
-
-
-# DATA LOADER (SAFE)
-
-@st.cache_data
-def load_data():
-    df = pd.read_csv(
-        "data/Superstore_sales.csv",
-        encoding="latin1",
-        parse_dates=["Order Date"],
-        dayfirst=True
-    )
-    df = df.dropna(subset=["Sales"])
-    return df
-
-df = load_data()
-
-
+# -------------------------------------------------
 # SIDEBAR FILTERS
-
+# -------------------------------------------------
 st.sidebar.title("⚙️ Filters")
 
 region = st.sidebar.multiselect(
     "Region",
-    options=df["Region"].unique(),
-    default=df["Region"].unique()
+    sorted(df["Region"].unique()),
+    df["Region"].unique()
 )
 
 segment = st.sidebar.multiselect(
     "Customer Segment",
-    options=df["Segment"].unique(),
-    default=df["Segment"].unique()
+    sorted(df["Segment"].unique()),
+    df["Segment"].unique()
 )
 
 category = st.sidebar.multiselect(
     "Category",
-    options=df["Category"].unique(),
-    default=df["Category"].unique()
+    sorted(df["Category"].unique()),
+    df["Category"].unique()
 )
 
 filtered_df = df[
@@ -116,88 +82,81 @@ filtered_df = df[
     (df["Category"].isin(category))
 ]
 
-
+# -------------------------------------------------
 # HEADER
-
+# -------------------------------------------------
 st.title("📊 AI-Driven Market Trend Analysis")
 st.markdown(
-    "Dynamic analytics & forecasting system using Machine Learning on retail sales data."
+    "End-to-end **data analytics & forecasting dashboard** using Machine Learning."
 )
 
+# -------------------------------------------------
+# KPI METRICS
+# -------------------------------------------------
+c1, c2, c3, c4 = st.columns(4)
 
-# KPI METRICS (CIRCLE CONCEPT)
+c1.markdown(f"""
+<div class="card">
+<h2>₹ {filtered_df['Sales'].sum():,.0f}</h2>
+<p>Total Sales</p>
+</div>
+""", unsafe_allow_html=True)
 
-total_sales = filtered_df["Sales"].sum()
-total_orders = len(filtered_df)
-avg_sales = filtered_df["Sales"].mean()
+c2.markdown(f"""
+<div class="card">
+<h2>{filtered_df.shape[0]}</h2>
+<p>Total Orders</p>
+</div>
+""", unsafe_allow_html=True)
 
-c1, c2, c3 = st.columns(3)
+c3.markdown(f"""
+<div class="card">
+<h2>₹ {filtered_df['Sales'].mean():,.2f}</h2>
+<p>Average Order Value</p>
+</div>
+""", unsafe_allow_html=True)
 
-with c1:
-    st.markdown(f"""
-    <div class="metric">
-        <h2>₹ {total_sales:,.0f}</h2>
-        <p>Total Sales</p>
-    </div>
-    """, unsafe_allow_html=True)
+c4.markdown(f"""
+<div class="card">
+<h2>{filtered_df['Customer ID'].nunique()}</h2>
+<p>Unique Customers</p>
+</div>
+""", unsafe_allow_html=True)
 
-with c2:
-    st.markdown(f"""
-    <div class="metric">
-        <h2>{total_orders}</h2>
-        <p>Total Orders</p>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown("---")
 
-with c3:
-    st.markdown(f"""
-    <div class="metric">
-        <h2>₹ {avg_sales:,.2f}</h2>
-        <p>Average Sale</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.divider()
-
-
-# SALES BY SEGMENT (DONUT)
+# -------------------------------------------------
+# SALES DISTRIBUTION
+# -------------------------------------------------
+col1, col2 = st.columns(2)
 
 seg_sales = filtered_df.groupby("Segment")["Sales"].sum().reset_index()
-
 fig_seg = px.pie(
     seg_sales,
     values="Sales",
     names="Segment",
-    hole=0.5,
-    title="Sales by Customer Segment",
-    template="plotly_dark"
+    hole=0.45,
+    title="Sales by Customer Segment"
 )
-
-
-# SALES BY REGION
+col1.plotly_chart(fig_seg, use_container_width=True)
 
 reg_sales = filtered_df.groupby("Region")["Sales"].sum().reset_index()
-
-fig_region = px.bar(
+fig_reg = px.bar(
     reg_sales,
     x="Region",
     y="Sales",
-    title="Sales by Region",
-    template="plotly_dark"
+    title="Sales by Region"
 )
+col2.plotly_chart(fig_reg, use_container_width=True)
 
-colA, colB = st.columns(2)
-colA.plotly_chart(fig_seg, width="stretch")
-colB.plotly_chart(fig_region, width="stretch")
+st.markdown("---")
 
-st.divider()
-
-
-# MONTHLY SALES TREND
-
+# -------------------------------------------------
+# TIME SERIES ANALYSIS
+# -------------------------------------------------
 monthly = (
     filtered_df
-    .groupby(pd.Grouper(key="Order Date", freq="ME"))["Sales"]
+    .groupby(pd.Grouper(key="Order Date", freq="M"))["Sales"]
     .sum()
     .reset_index()
 )
@@ -207,15 +166,13 @@ fig_month = px.line(
     x="Order Date",
     y="Sales",
     markers=True,
-    title="Monthly Sales Trend",
-    template="plotly_dark"
+    title="Monthly Sales Trend"
 )
+st.plotly_chart(fig_month, use_container_width=True)
 
-st.plotly_chart(fig_month, width="stretch")
-
-
-# TOP 10 PRODUCTS
-
+# -------------------------------------------------
+# TOP PRODUCTS
+# -------------------------------------------------
 top_products = (
     filtered_df
     .groupby("Product Name")["Sales"]
@@ -230,31 +187,24 @@ fig_top = px.bar(
     x="Sales",
     y="Product Name",
     orientation="h",
-    title="Top 10 Products by Sales",
-    template="plotly_dark"
+    title="Top 10 Products by Sales"
 )
+st.plotly_chart(fig_top, use_container_width=True)
 
-st.plotly_chart(fig_top, width="stretch")
+st.markdown("---")
 
-st.divider()
-
-
-# LINEAR REGRESSION FORECAST
-
+# -------------------------------------------------
+# MACHINE LEARNING FORECAST
+# -------------------------------------------------
 monthly["Index"] = np.arange(len(monthly))
-
 X = monthly[["Index"]]
 y = monthly["Sales"]
 
 model = LinearRegression()
 model.fit(X, y)
-
 monthly["Prediction"] = model.predict(X)
 
-r2 = r2_score(y, monthly["Prediction"])
-mae = mean_absolute_error(y, monthly["Prediction"])
-
-future_steps = 12
+future_steps = 6
 future_index = pd.DataFrame({
     "Index": range(len(X), len(X) + future_steps)
 })
@@ -262,7 +212,7 @@ future_index = pd.DataFrame({
 future_dates = pd.date_range(
     start=monthly["Order Date"].max(),
     periods=future_steps + 1,
-    freq="ME"
+    freq="M"
 )[1:]
 
 future_sales = model.predict(future_index)
@@ -272,39 +222,32 @@ forecast_df = pd.DataFrame({
     "Sales": future_sales
 })
 
-fig_forecast = px.line(
+forecast_plot = px.line(
     pd.concat([monthly[["Order Date","Sales"]], forecast_df]),
     x="Order Date",
     y="Sales",
-    title="Sales Forecast (Linear Regression)",
-    template="plotly_dark"
+    title="Sales Forecast (Linear Regression)"
 )
+st.plotly_chart(forecast_plot, use_container_width=True)
 
-st.plotly_chart(fig_forecast, width="stretch")
-
-
+# -------------------------------------------------
 # MODEL PERFORMANCE
+# -------------------------------------------------
+r2 = r2_score(y, monthly["Prediction"])
+mae = mean_absolute_error(y, monthly["Prediction"])
 
 m1, m2 = st.columns(2)
-m1.metric("R² Score", f"{r2:.3f}")
+m1.metric("R² Score", round(r2, 3))
 m2.metric("Mean Absolute Error", f"₹ {mae:,.2f}")
 
-st.divider()
+st.markdown("---")
 
+# -------------------------------------------------
+# DATA VIEW
+# -------------------------------------------------
+with st.expander("📂 View Filtered Dataset"):
+    st.dataframe(filtered_df)
 
-# RAW & FILTERED DATA
-
-st.subheader("📂 Filtered Dataset")
-st.dataframe(filtered_df, width="stretch")
-
-st.subheader("📂 Raw Dataset")
-st.dataframe(df.head(100), width="stretch")
-
-
-# FOOTER
-
-st.divider()
 st.markdown(
-    "**AI Applications – Module E | Market Trend Analysis Project**"
+    "**AI Applications – Market Trend Analysis Project | Streamlit + ML**"
 )
-
